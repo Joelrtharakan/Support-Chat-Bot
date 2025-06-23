@@ -1,16 +1,19 @@
 from flask import Flask, render_template, request, jsonify, session
+from dotenv import load_dotenv
 import subprocess
 from jira import JIRA
 import os
 import tempfile
 
+load_dotenv()
+
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"  # Change this!
 
 # Jira config
-JIRA_URL = "https://joelrtharakanin.atlassian.net"
-JIRA_EMAIL = "joelrtharakan.in@gmail.com"
-JIRA_API_TOKEN = "REMOVED_API_TOKEN"
+JIRA_URL = os.getenv("JIRA_URL")
+JIRA_EMAIL = os.getenv("JIRA_EMAIL")
+JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")
 JIRA_PROJECT_KEY = "MFLP"
 
 # Connect to Jira
