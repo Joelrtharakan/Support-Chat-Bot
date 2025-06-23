@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elite Support Chatbot</title>
+  <!-- Google Fonts - Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Reset and Box Sizing */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Body Styles */
+    body {
+      font-family: 'Inter', sans-serif; /* Using Inter font */
+      background: linear-gradient(135deg, #c1e1ec, #7dbcd4); /* Softer, more modern gradient */
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden; /* Prevent body scroll on small screens if chat is too big */
+    }
+
+    /* Chat Widget Container */
+    #chat-widget {
+      width: 100%;
+      max-width: 480px; /* Slightly wider */
+      height: 90vh;
+      background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
+      border-radius: 25px; /* More rounded corners */
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); /* Stronger, more diffused shadow */
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      transition: all 0.3s ease-in-out; /* Smooth transitions for potential future animations */
+    }
+
+    /* Chat Header */
+    #chat-header {
+      background: linear-gradient(90deg, #1a5e7a, #3a7d97); /* Deeper, more sophisticated blue gradient */
+      color: white;
+      padding: 20px 25px;
+      font-size: 1.6rem; /* Larger font */
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.8px; /* Slightly spaced letters */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25); /* Text shadow for depth */
+      border-top-left-radius: 25px;
+      border-top-right-radius: 25px;
+      position: relative; /* For potential future elements */
+      z-index: 2; /* Ensure it's above other elements if needed */
+    }
+
+    /* Chat Messages Area */
+    #chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: url('https://www.transparenttextures.com/patterns/clean-textile.png') repeat; /* Subtle background texture */
+      background-color: rgba(249, 251, 254, 0.9); /* Slightly transparent background for texture */
+      border-bottom: 1px solid #ebf2f8; /* Subtle border */
+      scroll-behavior: smooth; /* Smooth scrolling */
+    }
+
+    /* Message Wrapper */
+    .message {
+      margin-bottom: 15px; /* More space between messages */
+      display: flex;
+      /* Animation for new messages */
+      animation: fadeInBubble 0.3s ease-out forwards;
+      opacity: 0; /* Start hidden */
+      transform: translateY(10px); /* Start slightly below */
+    }
+
+    /* User Message Alignment */
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    /* Bot Message Alignment */
+    .message.bot {
+      justify-content: flex-start;
+    }
+
+    /* Message Bubble Styles */
+    .bubble {
+      padding: 12px 18px; /* More padding */
+      border-radius: 22px; /* More rounded bubbles */
+      font-size: 1rem;
+      line-height: 1.5;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Deeper shadow for bubbles */
+      max-width: 80%;
+      position: relative; /* For the "tail" effect */
+      transition: transform 0.2s ease; /* Smooth scale on hover/tap */
+    }
+
+    /* User Bubble */
+    .message.user .bubble {
+      background: linear-gradient(145deg, #3a82a8, #1d5f7a); /* Bold blue gradient */
+      color: white;
+      border-bottom-right-radius: 6px; /* Slightly sharper corner for the "tail" */
+    }
+
+    /* User Bubble Tail */
+    .message.user .bubble::after {
+      content: '';
+      position: absolute;
+      right: -8px; /* Position the tail */
+      bottom: 0px; /* Aligned with the bottom of the bubble */
+      width: 0;
+      height: 0;
+      border: 10px solid transparent;
+      border-left-color: #1d5f7a; /* Color matching the bubble gradient end */
+      border-bottom-color: #1d5f7a;
+      border-radius: 5px; /* Soften the tail point */
+    }
+
+    /* Bot Bubble */
+    .message.bot .bubble {
+      background: linear-gradient(145deg, #eaf4f7, #dae7eb); /* Soft light gradient */
+      color: #333;
+      border-bottom-left-radius: 6px; /* Slightly sharper corner for the "tail" */
+    }
+
+    /* Bot Bubble Tail */
+    .message.bot .bubble::after {
+      content: '';
+      position: absolute;
+      left: -8px; /* Position the tail */
+      bottom: 0px; /* Aligned with the bottom of the bubble */
+      width: 0;
+      height: 0;
+      border: 10px solid transparent;
+      border-right-color: #dae7eb; /* Color matching the bubble gradient end */
+      border-bottom-color: #dae7eb;
+      border-radius: 5px; /* Soften the tail point */
+    }
+
+    /* Input Area */
+    #chat-input-area {
+      padding: 15px 20px; /* More padding */
+      background-color: #fff;
+      border-top: 1px solid #ebf2f8; /* Subtle border */
+      display: flex;
+      align-items: center;
+      gap: 12px; /* More space between elements */
+      border-bottom-left-radius: 25px;
+      border-bottom-right-radius: 25px;
+      box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.03); /* Subtle shadow on top */
+      position: relative;
+      z-index: 2; /* Ensure it's above other elements if needed */
+    }
+
+    /* User Input Field */
+    #user-input {
+      flex: 1;
+      padding: 12px 20px;
+      font-size: 1rem;
+      border-radius: 28px; /* More rounded input */
+      border: 2px solid #ddd;
+      outline: none;
+      transition: all 0.3s ease; /* Smooth transition on focus */
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08); /* Inner shadow for depth */
+    }
+
+    #user-input:focus {
+      border-color: #3a7d97; /* Highlight on focus */
+      box-shadow: 0 0 0 3px rgba(58, 125, 151, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.08); /* Glowing effect */
+    }
+
+    /* Hidden File Input */
+    #file-input {
+      display: none;
+    }
+
+    /* Buttons (Upload and Send) */
+    #send-button, #upload-button {
+      background: linear-gradient(45deg, #3a7d97, #1a5e7a); /* Consistent button gradient */
+      color: white;
+      border: none;
+      border-radius: 28px; /* More rounded buttons */
+      font-size: 1rem;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease; /* Smooth transition */
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); /* Button shadow */
+      display: flex; /* For SVG icon alignment */
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Button Hover Effect */
+    #send-button:not(:disabled):hover, #upload-button:hover {
+      transform: translateY(-2px); /* Lift button on hover */
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); /* Stronger shadow on hover */
+    }
+
+    /* Button Active Effect */
+    #send-button:active, #upload-button:active {
+      transform: translateY(0); /* Push button down on click */
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Disabled Send Button */
+    #send-button:disabled {
+      background: linear-gradient(45deg, #a0c3d9, #87a8be); /* Lighter gradient for disabled state */
+      cursor: not-allowed;
+      box-shadow: none; /* No shadow when disabled */
+    }
+
+    /* SVG Icon Styling for Upload Button */
+    #upload-button svg {
+      width: 20px; /* Icon size */
+      height: 20px;
+      fill: currentColor; /* Inherit color from parent */
+    }
+
+    /* Keyframe Animations */
+    @keyframes fadeInBubble {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 600px) {
+      #chat-widget {
+        width: 100%;
+        height: 100vh;
+        max-width: none;
+        border-radius: 0; /* Full screen on small devices */
+        box-shadow: none;
+      }
+      #chat-header {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+      }
+      #chat-input-area {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        padding: 12px 15px; /* Slightly less padding */
+      }
+      #user-input {
+        padding: 10px 15px;
+      }
+      #send-button, #upload-button {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-widget">
+    <div id="chat-header">💬 Support Assistant</div>
+
+    <div id="chat-messages"></div>
+
+    <div id="chat-input-area">
+      <input type="file" id="file-input" />
+      <button id="upload-button" aria-label="Upload file">
+        <!-- SVG for Clip Icon -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-paperclip">
+          <path d="M21.44 11.03l-10.9-10.9a6.03 6.03 0 00-8.52 8.52l10.9 10.9a7.03 7.03 0 009.94 0 7.03 7.03 0 000-9.94z"></path>
+          <path d="M15 7l-6 6"></path>
+        </svg>
+      </button>
+      <input type="text" id="user-input" placeholder="Type your message..." oninput="toggleSendButton()" />
+      <button id="send-button">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+    const uploadButton = document.getElementById('upload-button');
+    const fileInput = document.getElementById('file-input');
+
+    let userData = { name: null, email: null };
+
+    // Function to enable/disable send button based on input
+    function toggleSendButton() {
+      sendButton.disabled = userInput.value.trim() === '';
+    }
+
+    // Function to append a new message to the chat
+    function appendMessage(text, sender) {
+      const wrapper = document.createElement('div');
+      wrapper.className = `message ${sender}`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      wrapper.appendChild(bubble);
+      chatMessages.appendChild(wrapper);
+      // Scroll to the latest message smoothly
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Function to handle sending messages
+    function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return; // Do not send empty messages
+
+      appendMessage(text, 'user'); // Display user's message
+      userInput.value = ''; // Clear input field
+      toggleSendButton(); // Update send button state
+
+      // Implement your chatbot logic here based on the step or user data
+      if (!userData.name) {
+        // First, ask for the user's name
+        userData.name = text;
+        appendMessage("Thanks! Can I have your email address?", 'bot');
+        return;
+      }
+      if (!userData.email) {
+        // Then, ask for the user's email
+        userData.email = text;
+        appendMessage(`Hi ${userData.name}, how can I assist you today?`, 'bot');
+        return;
+      }
+
+      // If name and email are already collected, proceed with general chat
+      // This is a placeholder for your actual API call.
+      // Replace with your fetch logic to a backend chatbot API.
+      fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, user: userData })
+      })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        // Display bot's reply. 'reply' or 'response' depends on your backend.
+        appendMessage(data.reply || data.response, 'bot');
+      })
+      .catch(error => {
+        console.error('Error fetching chat reply:', error);
+        appendMessage("⚠️ Something went wrong. Please try again later.", 'bot');
+      });
+    }
+
+    // Function to handle file uploads
+    function uploadFile(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Placeholder for your file upload API call
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        appendMessage(data.message || "File uploaded successfully!", 'bot');
+      })
+      .catch(error => {
+        console.error('Error uploading file:', error);
+        appendMessage("❌ Upload failed. Please try again.", 'bot');
+      });
+    }
+
+    // Event listener for upload button click
+    uploadButton.addEventListener('click', () => fileInput.click());
+
+    // Event listener for file input change (when a file is selected)
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        appendMessage(`📎 Sending: ${file.name}`, 'user'); // Inform user file is selected
+        uploadFile(file); // Call upload function
+      }
+    });
+
+    // Event listener for send button click
+    sendButton.addEventListener('click', sendMessage);
+
+    // Event listener for Enter key press in the input field
+    userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !sendButton.disabled) { // Only send if not disabled
+        sendMessage();
+      }
+    });
+
+    // Initial message from the bot when the chat starts
+    window.addEventListener('load', () => {
+      appendMessage("Hi there! What is your name?", 'bot');
+      toggleSendButton(); // Ensure button state is correct on load
+    });
+  </script>
+</body>
+</html>
